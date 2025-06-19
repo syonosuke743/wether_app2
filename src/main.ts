@@ -6,8 +6,8 @@ const WEATHER_API_KEY = import.meta.env.VITE_WEATHER_API_KEY;
 //HTMLが環境変数を理解しないからts側でスクリプトタグを作る
 const script = document.createElement('script');
 script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=marker`;
-script.async = true;
-script.defer = true;
+script.async = true;//スクリプトをHTML解析と並列に読み込み、読み込み次第すぐ実行
+script.defer = true;//スクリプトをHTML解析と並列に読み込み、HTML構文解析後に実行
 document.head.appendChild(script);
 
 export async function initMap() {
