@@ -26,10 +26,10 @@ export async function initMap() {
   let infoWindow: google.maps.InfoWindow | null = null;
 
   //e は Google Maps API が渡してくれるクリックイベントオブジェクト。
-  //このオブジェクトの中には latLng というプロパティがあり、それがクリックされた場所の緯度・経度情報を持つオブジェクト。
+  //このオブジェクトの中には latLng というプロパティがあり、それがクリックされた場所の緯度・経度情報を持つ
   map.addListener("click", async (e: google.maps.MapMouseEvent) => {
-    const lat = e.latLng?.lat();//緯度  推論される型: number | undefined
-    const lng = e.latLng?.lng();//経度
+    const lat = e.latLng?.lat();//緯度  推論される型: number | undefined ?.を使うと「nullやundefinedのときに処理をスキップ」して undefined を返す
+    const lng = e.latLng?.lng();//経度 //メソッドとはオブジェクトの中の「関数」プロパティ
 
     if (currentMarker) currentMarker.map = null;
 
@@ -49,8 +49,8 @@ export async function initMap() {
       const res = await fetch(url);
       const data = await res.json();
       const weather = {
-        description: data.current.condition.text,
-        temp: data.current.temp_c,
+        description: data.current.condition.text as string,
+        temp: data.current.temp_c as number,
       };
 
       if (infoWindow) infoWindow.close();
@@ -85,9 +85,22 @@ function waitForGoogleMaps(): Promise<void> {
         clearInterval(interval);
         resolve();// ←「今読み込まれたよ！」と通知する
       }
-    }, 100);
-  });
+    }, 100)
+  })
 }
+
+// window（実行環境、グローバルオブジェクト）
+// ├── document（DOMツリーのルート）
+// │   ├── <html>
+// │   │   ├── <head>
+// │   │   └── <body>
+// │   │       ├── <div>
+// │   │       └── <script>
+// ├── console
+// ├── localStorage
+// ├── navigator
+// ├── setTimeout, fetch, alert
+// └── google.maps（← Google Mapsを読み込むと追加される）googleはオブジェクトでmapsはプロパティ
 
 waitForGoogleMaps().then(() => {
   initMap();
@@ -97,10 +110,10 @@ waitForGoogleMaps().then(() => {
 
 // Promise も async/await も、どちらでも非同期処理は書ける。
 // 「Promiseで“待てる処理”を作る人（提供者）」と「async/awaitで“待つ処理”を書く人（利用者）」の役割が違う、という点。
-// でも「Promiseを作る」と「awaitする」は違うレイヤーの役割。
+// 「Promiseを作る」と「awaitする」は違うレイヤーの役割。
 // async function main() {
 //   console.log("1秒待ちます");
-//   await wait(1000); ← 提供された Promise を「待って」いる
+//   await wait(1000); ← 提供された Promiseがresolve()という関数 を「待って」いる
 //   console.log("完了！");
 // }
 // 提供された Promise（＝待てるオブジェクト）を受け取って
@@ -110,17 +123,16 @@ waitForGoogleMaps().then(() => {
 // ではなぜgoogleMAPではpromiseで中身を作って明示的に待てる状態にする必要があるの？
 // ユーザーからみれば結局データが来るまで待たないといけないのだから、明示的だろうとなかろうといっしょでは？
 
-// 「どうせ待つんだから一緒では？」という直感は、 fetch() のようなAPIではその通り。
 // APIを呼び出す「fetch」と「CDNスクリプト」の違いはライブラリが待てる形を提供しているかいないか
+//厳密にはcallbackというクエリパラメータが提供されてはいるが非推奨になっている
 
 // const res = await fetch("/api/weather"); // ← 中身が来るまで暗黙的に待つ
 // fetch は最初から Promise を返す関数（利用者は await すればOK）
 // ライブラリ側が待てる形を提供している
 
 // 一方で Google Maps のCDNスクリプトはどうか？
-// <script src="https://maps.googleapis.com/maps/api/js?key=...&libraries=marker" async defer></script>
-// スクリプトが読み込まれるのは「非同期」
+// スクリプトが読み込まれるのは「非同期」で使いたいのに
 // window.google.maps がいつ定義されるかは保証されていない
-// スクリプトの読み込み完了が「イベントでも通知されない」
+// Google Maps は「使えるようになったよ」という標準イベントを発火しない
 // つまり、待てる仕組みが最初から存在しない
-// だから、待てないものは、自分で「待てる形（Promise）」にするしかない
+// だから、待てないものは自分で「待てる形（Promise）」にするしかない
