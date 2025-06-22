@@ -34,7 +34,7 @@ export async function initMap() {
     if (currentMarker) currentMarker.map = null;
 
       // undefinedだったら何もしないで終了
-      //JavaScriptでは存在しないプロパティにアクセスすると TypeError が出る
+      //JavaScriptでは存在しないプロパティにアクセスすると TypeError が出る。アプリがその時点でクラッシュ
       //TypeScriptは、オプショナルチェーンを使うと、その戻り値に undefined の型が含まれると推論する。
       //Google Maps の仕様では、"click" イベント時は e.latLng はほぼ確実に存在するが、型的には「あるかもないかも」で定義される
     if (lat === undefined || lng === undefined) return;
@@ -120,18 +120,18 @@ waitForGoogleMaps().then(() => {
 // 「ここで一時停止して、完了を待ってから再開する」
 // つまり、Promise を作っていない。ただ使っているだけ。
 
-// ではなぜgoogleMAPではpromiseで中身を作って明示的に待てる状態にする必要があるの？
+// なぜgoogleMAPではpromiseで中身を作って明示的に待てる状態にする必要があるの？
 // ユーザーからみれば結局データが来るまで待たないといけないのだから、明示的だろうとなかろうといっしょでは？
 
 // APIを呼び出す「fetch」と「CDNスクリプト」の違いはライブラリが待てる形を提供しているかいないか
-//厳密にはcallbackというクエリパラメータが提供されてはいるが非推奨になっている
+//厳密にはGoogle Maps APIの設計が変わりつつあり、「必要なライブラリだけ後から読み込む」というモジュール化設計を推進している
 
 // const res = await fetch("/api/weather"); // ← 中身が来るまで暗黙的に待つ
 // fetch は最初から Promise を返す関数（利用者は await すればOK）
 // ライブラリ側が待てる形を提供している
 
 // 一方で Google Maps のCDNスクリプトはどうか？
-// スクリプトが読み込まれるのは「非同期」で使いたいのに
+// スクリプトが読み込まれるのは「非同期」なのに
 // window.google.maps がいつ定義されるかは保証されていない
 // Google Maps は「使えるようになったよ」という標準イベントを発火しない
 // つまり、待てる仕組みが最初から存在しない
